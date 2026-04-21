@@ -1,43 +1,36 @@
 import requests
 import os
 
-# CONFIG
-API_KEY = os.getenv("CLAUDE_KEY") # Ta clé Google AI Studio (AIza...)
+# CONFIGURATION
+API_KEY = os.getenv("CLAUDE_KEY").strip()
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 
 def handler():
-    # 1. NEWS SIMPLES
-    news_url = f"https://newsapi.org/v2/top-headlines?country=fr&category=business&apiKey={NEWS_API_KEY}"
-    articles = requests.get(news_url).json().get('articles', [])[:5]
-    context = " / ".join([a['title'] for a in articles])
+    # 1. RÉCUPÉRATION DES NEWS
+    news_url = f"https://newsapi.org/v2/everything?q=business+tech&language=fr&apiKey={NEWS_API_KEY}"
+    articles = requests.get(news_url).json().get('articles', [])[:10]
+    context = "\n".join([a['title'] for a in articles])
 
-    # 2. PROMPT
-    prompt = f"Tu es une IA d'arbitrage. Analyse ces news : {context}. Donne une opportunité business."
+    # 2. IDENTITÉ ET PROMPT
+    prompt = f"Tu es une IA d'arbitrage. Analyse ces news et donne une opportunité : {context}. Réponds avec : SIGNAL, ANTHÈSE, OPPORTUNITÉ, VITESSE, CONVICTION."
 
-    # 3. APPEL GEMINI (URL LA PLUS STABLE)
-    # Note : Utilisation de v1/models/gemini-1.5-flash
-    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+    # 3. APPEL GOOGLE (L'URL LA PLUS STABLE)
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={API_KEY}"
     
-    headers = {'Content-Type': 'application/json'}
-    payload = {
-        "contents": [{
-            "parts": [{"text": prompt}]
-        }]
-    }
-    
-    res = requests.post(url, headers=headers, json=payload)
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    res = requests.post(url, json=payload)
     
     if res.status_code == 200:
         analyse = res.json()['candidates'][0]['content']['parts'][0]['text']
-        message = f"✅ ANALYSE RÉUSSIE :\n\n{analyse}"
+        msg = f"🤖 **UNITÉ SYNTHÉTIQUE**\n\n{analyse}"
     else:
-        # Si ça met encore 404, c'est la clé API qui est en cause
-        message = f"❌ Erreur {res.status_code} : Vérifie que ton secret CLAUDE_KEY contient bien la clé AIza..."
+        msg = f"❌ Erreur : {res.json().get('error', {}).get('message', 'Problème de clé')}"
 
-    # 4. ENVOI TELEGRAM
-    requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage", data={"chat_id": CHAT_ID, "text": message})
+    # 4. TELEGRAM
+    requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage", 
+                  data={"chat_id": CHAT_ID, "text": msg, "parse_mode": "Markdown"})
 
 if __name__ == "__main__":
     handler()
