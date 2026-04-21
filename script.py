@@ -45,7 +45,7 @@ INTERDICTIONS : Pas d'idées génériques, pas de prudence excessive, pas de jar
     }
     
     data = {
-        "model": "claude-3-5-sonnet-20240620",
+        "model": "claude-3-haiku-20240307",
         "max_tokens": 1000,
         "system": system_prompt,
         "messages": [{"role": "user", "content": f"Analyse les signaux suivants et extrais une opportunité d'arbitrage asymétrique :\n\n{context}"}]
