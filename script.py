@@ -37,12 +37,23 @@ STRUCTURE DE TA RÉPONSE (Format Strict) :
 
 INTERDICTIONS : Pas d'idées génériques, pas de prudence excessive, pas de jargon inutile. Sois chirurgical."""
 
-    # 3. APPEL À L'UNITÉ DE TRAITEMENT (CLAUDE 3.5 SONNET)
-    headers = {
-        "x-api-key": CLAUDE_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json"
+# 3. APPEL SIMPLIFIÉ
+    payload = {
+        "model": "claude-3-haiku-20240307",
+        "max_tokens": 1000,
+        "system": system_prompt,
+        "messages": [{"role": "user", "content": f"Analyse ces signaux : {context}"}]
     }
+    
+    response = requests.post(
+        "https://api.anthropic.com/v1/messages",
+        headers={
+            "x-api-key": CLAUDE_API_KEY.strip(), # Le .strip() enlève les espaces invisibles
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json"
+        },
+        json=payload
+    )
     
     data = {
         "model": "claude-3-haiku-20240307",
